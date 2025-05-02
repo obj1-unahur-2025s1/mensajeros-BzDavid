@@ -1,0 +1,156 @@
+import mensajeros.*
+import mensajeria.*
+
+describe "Test de los mensajeros llegando a los distintos lugares (primera parte)" {
+  test "Roberto lleva un paquete a Brooklyn que está pago en un camión que posee un acoplado" {
+    roberto.cambiarVehiculo(camion)
+    assert.that(puenteDeBrooklyn.puedeEntrar(roberto) and paquete.estaPago())
+  }
+
+  test "Roberto no pudo llevar un paquete a Brooklyn que no está pago en un camión que posee un acoplado" {
+    roberto.cambiarVehiculo(camion)
+    paquete.cambiarSiEstaPago()
+    assert.notThat(puenteDeBrooklyn.puedeEntrar(roberto) and paquete.estaPago())
+  }
+
+  test "Roberto no pudo llevar un paquete a Brooklyn que está pago en un camión que posee cuatro acoplados" {
+    roberto.cambiarVehiculo(camion)
+    camion.agregarUnAcoplado()
+    camion.agregarUnAcoplado()
+    camion.agregarUnAcoplado()
+    assert.notThat(puenteDeBrooklyn.puedeEntrar(roberto) and paquete.estaPago())
+  }
+
+  test "roberto lleva un paquete pago a laMatrix pero lo echan por no poder llamar" {
+    assert.notThat(laMatrix.puedeEntrar(roberto) and paquete.estaPago())
+  }
+}
+
+describe "Tests de la mensajería (segunda parte)" {
+  test "La mensajería contrata a un mensajero" {
+    mensajeria.contratarMensajero(roberto)
+    assert.equals(mensajeria.empleados().size(), 1)
+  }
+
+  test "La mensajería despide a un mensajero" {
+    mensajeria.contratarMensajero(roberto)
+    assert.equals(mensajeria.empleados().size(), 1)
+    mensajeria.despedirMensajero(roberto)
+    assert.equals(mensajeria.empleados().size(), 0)
+  }
+
+  test "La mensajería despide a todos los mensajeros" {
+    mensajeria.contratarMensajero(roberto)
+    mensajeria.contratarMensajero(neo)
+    mensajeria.contratarMensajero(chuckNorris)
+    assert.equals(mensajeria.empleados().size(), 3)
+    mensajeria.despedirATodosLosMensajeros()
+    assert.equals(mensajeria.empleados().size(), 0)
+  }
+
+  test "¿La mensajería es grande?" {
+    //Es grande si tiene más de 2 mensajeros.
+    mensajeria.contratarMensajero(roberto)
+    mensajeria.contratarMensajero(neo)
+    mensajeria.contratarMensajero(chuckNorris)
+    assert.that(mensajeria.esGrande())
+  }
+
+  test "¿La mensajería no es grande?" {
+    mensajeria.contratarMensajero(roberto)
+    assert.notThat(mensajeria.esGrande())
+  }
+
+  test "¿El primer paquete con destino al puente de Brooklin puede ser entregado por el primer mensajero?" {
+    mensajeria.contratarMensajero(roberto)
+    assert.that(mensajeria.paquete_PuedeSerEntregadoPorAlgunMensajero(paquete))
+  }
+
+  test "Cuál es el peso del último mensajero?" {
+    mensajeria.contratarMensajero(roberto)
+    mensajeria.contratarMensajero(neo)
+    assert.equals(mensajeria.pesoDelUltimoMensajero(), neo.peso())
+  }
+}
+
+describe "Tests de los paquetes (tercera parte)" {
+
+  const listaDePaquetes = [paquete, paquete, paquetito, paquetonViajero, paquete, paquetePolimorfico]
+
+  test "¿Puede un empleado entregar el paquete?" {
+    testObject.contratarALosMensajeros()
+    assert.that(mensajeria.paquete_PuedeSerEntregadoPorAlgunMensajero(paquete))
+  }
+
+  test "Dar la lista de los mensajeros que puedan llevar el paquete" {
+    testObject.contratarALosMensajeros()
+    console.println(mensajeria.cualesMensajerosPuedenEntregarPaquete_(paquete))
+    assert.equals(mensajeria.cualesMensajerosPuedenEntregarPaquete_(paquete).size(), 4)
+  }
+
+  test "La mensajería no tiene sobrepeso" {
+    testObject.contratarALosMensajeros()
+    assert.notThat(mensajeria.tieneSobrepeso())
+  }
+
+  test "La mensajería tiene sobrepeso" {
+    testObject.contratarALosMensajeros()
+    roberto.cambiarVehiculo(camion)
+    3.times({x => camion.agregarUnAcoplado()})
+    assert.that(mensajeria.tieneSobrepeso())
+  }
+
+  test "Enviar un paquete" {
+    testObject.contratarALosMensajeros()
+    mensajeria.enviarPaquete_(paquete)
+    assert.equals(mensajeria.cantidadFacturada(), paquete.precio())
+  }
+
+  test "Intentar enviar un paquete que no puede ser entregado" {
+    testObject.contratarALosMensajeros()
+    mensajeria.enviarPaquete_(paquetonViajero)
+    assert.equals(mensajeria.paquetesPendientes().size(), 1)
+    assert.equals(mensajeria.cantidadFacturada(), 0)
+  }
+
+  test "Conocer la facturacion de la empresa" {
+    testObject.contratarALosMensajeros()
+    mensajeria.enviarConjuntoDePaquetes_(listaDePaquetes)
+    assert.equals(mensajeria.cantidadFacturada(), 150)
+    console.println(mensajeria.paquetesPendientes())
+    assert.equals(mensajeria.paquetesPendientes().size(), 1)
+  }
+
+  test "Enviando un conjunto de paquetes (nuevamente...)" {
+    testObject.contratarALosMensajeros()
+    4.times({x => paquetonViajero.pagarLaMitad()})
+    mensajeria.enviarConjuntoDePaquetes_(listaDePaquetes)
+    assert.equals(mensajeria.cantidadFacturada(), 350)
+    assert.equals(mensajeria.paquetesPendientes().size(), 0)
+  }
+
+  test "Enviar el paquete más caro de los pendientes" {
+    testObject.contratarALosMensajeros()
+    paquete.cambiarSiEstaPago()
+    mensajeria.enviarPaquete_(paquetonViajero)
+    mensajeria.enviarPaquete_(paquete)
+    //Acá no pudo enviar los paquetes y estos quedaron en la lista de pendientes.
+    assert.notEquals(mensajeria.paquetesPendientes().size(), 0)
+    assert.equals(mensajeria.cantidadFacturada(), 0)
+    console.println(mensajeria.paquetesPendientes())
+    4.times({x => paquetonViajero.pagarLaMitad()})
+    paquete.cambiarSiEstaPago()
+    mensajeria.enviarElPaqueteMasCaroDeLosPendientes()
+    assert.equals(mensajeria.paquetesPendientes().size(), 1)
+    assert.equals(mensajeria.cantidadFacturada(), 200)
+  }
+}
+
+object testObject {
+  method contratarALosMensajeros() {
+    mensajeria.contratarMensajero(roberto)
+    mensajeria.contratarMensajero(neo)
+    mensajeria.contratarMensajero(chuckNorris)
+    mensajeria.contratarMensajero(flash)
+  }
+}
